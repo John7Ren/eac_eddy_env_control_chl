@@ -92,7 +92,7 @@ clear all; clc;
    end
 
  % Part C. Pick variable
-  Var = 23;
+  Var = 13;
   % Options
   % 
    % VIIRS Satellite (2012-present) 
@@ -328,7 +328,6 @@ clear all; clc;
   end
 
  % Part E. Pick root directory to save output & directory where Swath_OSU.m is saved
-   %root_directory = '/Users/roh029/Desktop/Data.nosync/Remote_Sensing'; % TRs local path
    root_directory = '/Users/pearl/Library/CloudStorage/OneDrive-UniversityofTasmania/Work/data';                 % TRs path on casper
    
  % Part F. Pick output to save
@@ -611,59 +610,3 @@ end
 %
 fn = '/Users/renjiongqiu/Work/Documents/aa_remote_sensing/Chl_MODIS_8day_2x4/Chl_fields.mat';
 save(fn,'Chl_loess','Chl_32tmean_loess','-v7.3');
-%% -------------------- calculate the loess filter
-clear all; close all; clc;
-dir = '/Users/renjiongqiu/Work/Documents/aa_remote_sensing/SST_MODIS_8day_2x4/';
-load([dir 'Full_time_Series']);
-
-gLat = imresize(Lat,0.5);
-gLon = imresize(Lon,0.5);
-SST_squeeze = nan(length(years)*length(time_steps),360,360);
-SST_loess = zeros(size(SST));
-SST_32tmean = nan(size(SST));
-SST_32tmean_loess = zeros(size(SST));
-% 32-d time window
-for iyr = 1:length(years)
-    for idt = 1:length(time_steps)
-        ii = length(time_steps)*(iyr-1) + idt;
-        SST_squeeze(ii,:,:) = SST(iyr,idt,:,:);
-        % disp(ii);
-    end
-end
-SST_32tmean_squeeze = movmean(SST_squeeze,5,1,'omitnan');
-for iyr = 1:length(years)
-    for idt = 1:length(time_steps)
-        ii = length(time_steps)*(iyr-1) + idt;
-        SST_32tmean(iyr,idt,:,:) = SST_squeeze(ii,:,:);
-        % disp(ii);
-    end
-end
-
-for iyr = 1:length(years)
-    yr = years(iyr);
-    for idt = 1:length(time_steps)
-        tic
-        dt = time_steps(idt);
-        % calculate SST field
-        iSST = squeeze(SST(iyr,idt,:,:));
-        giSST = imresize(iSST,0.5);
-        [lp,~]=smooth2d_loess(giSST,gLon(1,:),gLat(:,1),6,6,gLon(1,:),gLat(:,1)); %smooth using Loess filter
-        lp_data = imresize(lp,1/0.5);
-        SST_loess(iyr,idt,:,:) = lp_data;
-        % calculate 32tmeaned SST field
-        iSST = squeeze(SST_32tmean(iyr,idt,:,:));
-        giSST = imresize(iSST,0.5);
-        [lp,~]=smooth2d_loess(giSST,gLon(1,:),gLat(:,1),6,6,gLon(1,:),gLat(:,1)); %smooth using Loess filter
-        lp_data = imresize(lp,1/0.5);
-        SST_32tmean_loess(iyr,idt,:,:) = lp_data;
-
-        Progres= [iyr,idt];
-        fprintf(['iyr: ' num2str(iyr) ' idt: ' num2str(idt) ' yr: ' num2str(yr)])
-        toc
-    end
-end
-% save('SST_Anom_TS' , 'dataname', 'units', short_name, 'Lat', 'Lon', ... 
-%                                 'time_steps', 'years', 'yticks_m','ylabel_m', 'Domain', '-v7.3')
-%
-fn = '/Users/renjiongqiu/Work/Documents/aa_remote_sensing/SST_MODIS_8day_2x4/SST_fields.mat';
-save(fn,'SST_loess','SST_32tmean_loess','-v7.3');
