@@ -1,0 +1,31 @@
+# large data and generated outputs
+data/raw/
+data/processed/
+outputs/
+figures/generated/
+
+*.nc
+*.zarr
+*.pkl
+*.npz
+*.npy
+*.h5
+*.hdf5
+*.tif
+*.zip
+*.tar
+*.tar.gz
+
+# Python
+__pycache__/
+*.pyc
+.ipynb_checkpoints/
+.venv/
+env/
+.env
+
+# macOS
+.DS_Store
+
+# editor
+.vscode/
