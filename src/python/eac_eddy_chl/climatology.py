@@ -16,6 +16,43 @@ from .regions import (
 )
 from .time_utils import get_8day_bins
 
+
+def calculate_track_top_n_mean(values, tracks, n: int = 5):
+    """
+    Calculate a track-level top-n mean and return one value per realization.
+
+    For each eddy track, this calculates the mean of the n largest finite
+    values, then assigns that track-level value back to every realization
+    belonging to the same track. In this workflow, it is used to calculate
+    the track-level amplitude metric used for amplitude-group diagnostics.
+    """
+    values = np.asarray(values, dtype=float)
+    tracks = np.asarray(tracks)
+
+    if values.shape[0] != tracks.shape[0]:
+        raise ValueError(
+            "values and tracks must have the same length: "
+            f"got {values.shape[0]} and {tracks.shape[0]}"
+        )
+
+    df = pd.DataFrame({"track": tracks, "value": values})
+
+    def _top_n_mean(series):
+        arr = series.to_numpy(dtype=float)
+        arr = arr[np.isfinite(arr)]
+
+        if arr.size == 0:
+            return np.nan
+
+        n_use = min(n, arr.size)
+        return np.nanmean(np.sort(arr)[-n_use:])
+
+    return (
+        df.groupby("track", sort=False)["value"]
+        .transform(_top_n_mean)
+        .to_numpy(dtype=float)
+    )
+
 def _smooth_1d_nan_safe(y, window_length=5, polyorder=2):
     """
     Smooth a 1D seasonal series after linearly filling internal NaNs.
@@ -285,12 +322,26 @@ def build_region_eddy_climatology(region_name, region_masks, ce_subset, ae_subse
     for ie, eddy in {"C": ce_subset, "A": ae_subset}.items():
         mask_loc = eddy_region_mask(eddy, region_mask, lat_bins=lat_bins, lon_bins=lon_bins)
         doy = eddy["dayofyear"]
+
+        # Realization-level amplitude is the instantaneous eddy amplitude.
+        # Track-level amplitude follows the paper diagnostic: for each eddy
+        # track, use the mean of the five largest amplitude values, then assign
+        # that single track metric back to all realizations in the track.
+        amp_track_all = calculate_track_top_n_mean(
+            eddy["amplitude"],
+            eddy["track"],
+            n=5,
+        )
+
         out["tstep_realz_dict"][ie] = eddy["tstep8"][mask_loc]
         out["chl_anom_dict"][ie] = eddy["chl_r_range_VHR"][mask_loc, 1]
         out["amp_realz_dict"][ie] = eddy["amplitude"][mask_loc]
-        out["amp_track_dict"][ie] = eddy.get("amp_track", np.full_like(eddy["amplitude"], np.nan))[mask_loc]
+        out["amp_track_dict"][ie] = amp_track_all[mask_loc]
         out["age_realz_dict"][ie] = eddy["observation_number"][mask_loc]
-        out["birthday_track_dict"][ie] = eddy.get("birthday_track", np.full_like(eddy["dayofyear"], np.nan))[mask_loc]
+        out["birthday_track_dict"][ie] = eddy.get(
+            "birthday_track",
+            np.full(eddy["dayofyear"].shape, np.nan, dtype=float),
+        )[mask_loc]
         out["doy_realz_dict"][ie] = eddy["dayofyear"][mask_loc]
         out["age_norm_dict"][ie] = eddy["dayoflife_norm"][mask_loc]
         out["life_span_dict"][ie] = eddy["age"][mask_loc]
