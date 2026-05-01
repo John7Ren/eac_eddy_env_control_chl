@@ -16,6 +16,34 @@ from .regions import (
 )
 from .time_utils import get_8day_bins
 
+def _smooth_1d_nan_safe(y, window_length=5, polyorder=2):
+    """
+    Smooth a 1D seasonal series after linearly filling internal NaNs.
+
+    Returns all-NaN if the input has no finite values.
+    Returns the original/fill-interpolated series if there are too few points for Savitzky-Golay.
+    """
+    y = np.asarray(y, dtype=float)
+    out = np.full_like(y, np.nan, dtype=float)
+
+    finite = np.isfinite(y)
+    if finite.sum() == 0:
+        return out
+
+    x = np.arange(y.size)
+
+    # Fill NaNs by linear interpolation so savgol_filter does not propagate NaNs.
+    y_fill = y.copy()
+    if finite.sum() == 1:
+        y_fill[:] = y[finite][0]
+    else:
+        y_fill[~finite] = np.interp(x[~finite], x[finite], y[finite])
+
+    # Savitzky-Golay requires an odd window and polyorder < window_length.
+    if y.size < window_length or finite.sum() <= polyorder:
+        return y_fill
+
+    return savgol_filter(y_fill, window_length=window_length, polyorder=polyorder)
 
 def build_background_map_climatology(
     *,
@@ -97,26 +125,30 @@ def build_background_map_climatology(
             mask_LOC_k = (Lat_k >= ilat_1) & (Lat_k < ilat) & (Lon_k >= ilon) & (Lon_k < ilon_1)
             izeu_climt = np.nanmean(zeu_ts[:, :, mask_LOC_k], axis=(0, 2))
             if np.any(np.isfinite(izeu_climt)):
-                izeu_climt_smooth = savgol_filter(izeu_climt, window_length=5, polyorder=2)
-                ipk = np.nanargmin(izeu_climt_smooth)
-                climt_bg_dict["Zeu"]["mag"][iy, ix] = izeu_climt_smooth[ipk]
-                climt_bg_dict["Zeu"]["mean"][iy, ix] = np.nanmean(izeu_climt)
-                climt_bg_dict["Zeu"]["std"][iy, ix] = np.nanstd(izeu_climt)
-                climt_bg_dict["Zeu"]["timing"][iy, ix] = pd.to_datetime(
-                    f"2001-{tsteps[ipk]:03d}", format="%Y-%j"
-                ).month
+                izeu_climt_smooth = _smooth_1d_nan_safe(izeu_climt, window_length=5, polyorder=2)
+
+                if np.any(np.isfinite(izeu_climt_smooth)):
+                    ipk = np.nanargmin(izeu_climt_smooth)
+                    climt_bg_dict["Zeu"]["mag"][iy, ix] = izeu_climt_smooth[ipk]
+                    climt_bg_dict["Zeu"]["mean"][iy, ix] = np.nanmean(izeu_climt)
+                    climt_bg_dict["Zeu"]["std"][iy, ix] = np.nanstd(izeu_climt)
+                    climt_bg_dict["Zeu"]["timing"][iy, ix] = pd.to_datetime(
+                        f"2001-{tsteps[ipk]:03d}", format="%Y-%j"
+                    ).month
 
             mask_LOC_c = (Lat_c >= ilat_1) & (Lat_c < ilat) & (Lon_c >= ilon) & (Lon_c < ilon_1)
             ichl_climt = np.nanmean(chl_ts[:, :, mask_LOC_c], axis=(0, 2))
             if np.any(np.isfinite(ichl_climt)):
-                ichl_climt_smooth = savgol_filter(ichl_climt, window_length=5, polyorder=2)
-                ipk = np.nanargmax(ichl_climt_smooth)
-                climt_bg_dict["Chl"]["mag"][iy, ix] = ichl_climt_smooth[ipk]
-                climt_bg_dict["Chl"]["mean"][iy, ix] = np.nanmean(ichl_climt)
-                climt_bg_dict["Chl"]["std"][iy, ix] = np.nanstd(ichl_climt)
-                climt_bg_dict["Chl"]["timing"][iy, ix] = pd.to_datetime(
-                    f"2001-{tsteps[ipk]:03d}", format="%Y-%j"
-                ).month
+                ichl_climt_smooth = _smooth_1d_nan_safe(ichl_climt, window_length=5, polyorder=2)
+
+                if np.any(np.isfinite(ichl_climt_smooth)):
+                    ipk = np.nanargmax(ichl_climt_smooth)
+                    climt_bg_dict["Chl"]["mag"][iy, ix] = ichl_climt_smooth[ipk]
+                    climt_bg_dict["Chl"]["mean"][iy, ix] = np.nanmean(ichl_climt)
+                    climt_bg_dict["Chl"]["std"][iy, ix] = np.nanstd(ichl_climt)
+                    climt_bg_dict["Chl"]["timing"][iy, ix] = pd.to_datetime(
+                        f"2001-{tsteps[ipk]:03d}", format="%Y-%j"
+                    ).month
     return climt_bg_dict, climt2d_bg_dict
 
 
