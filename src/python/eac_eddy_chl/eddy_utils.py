@@ -49,7 +49,56 @@ def add_day_of_life(eddy: dict[str, Any]) -> dict[str, Any]:
         eddy["age"][idx_mask] = age
     return eddy
 
+def calculate_track_top_n_mean(values, tracks, n: int = 5):
+    """
+    Calculate a track-level top-n mean and return it for each realization.
 
+    For each eddy track, this calculates the mean of the n largest finite
+    values, then assigns that track-level value back to all realizations
+    belonging to the same track.
+
+    Parameters
+    ----------
+    values
+        Realization-level values, for example eddy amplitude.
+    tracks
+        Track ID for each realization.
+    n
+        Number of largest values to average per track.
+
+    Returns
+    -------
+    numpy.ndarray
+        Same length as values, containing the track-level top-n mean.
+    """
+    import numpy as np
+    import pandas as pd
+
+    values = np.asarray(values, dtype=float)
+    tracks = np.asarray(tracks)
+
+    df = pd.DataFrame(
+        {
+            "track": tracks,
+            "value": values,
+        }
+    )
+
+    def _top_n_mean(series):
+        arr = series.to_numpy(dtype=float)
+        arr = arr[np.isfinite(arr)]
+
+        if arr.size == 0:
+            return np.nan
+
+        n_use = min(n, arr.size)
+        return np.nanmean(np.sort(arr)[-n_use:])
+
+    return (
+        df.groupby("track")["value"]
+        .transform(_top_n_mean)
+        .to_numpy(dtype=float)
+    )
 def top_n_mean(arr, n: int = 5):
     """Return mean, count, and values for the top ``n`` finite values."""
     arr = np.asarray(arr)
