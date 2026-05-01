@@ -6,7 +6,6 @@ addpath(genpath(fullfile(repo_dir, 'src', 'matlab')));
 %% User paths
 data_root = '/Users/pearl/Library/CloudStorage/OneDrive-UniversityofTasmania/Work/eac_eddy_env_control_chl_data';
 
-eddy_dir = fullfile(data_root, 'raw', 'aviso_meta');
 rs_dir   = fullfile(data_root, 'processed', 'remote_sensing');
 out_dir  = fullfile(data_root, 'processed', 'eddy_chl_collocation');
 

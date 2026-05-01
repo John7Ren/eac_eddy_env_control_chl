@@ -29,3 +29,13 @@ env/
 
 # editor
 .vscode/
+
+# large legacy notebooks
+archive/notebooks_legacy/*.ipynb
+notebooks/exploratory/*.ipynb
+
+config/paths_local.yml
+# Python packaging metadata
+*.egg-info/
+build/
+dist/
