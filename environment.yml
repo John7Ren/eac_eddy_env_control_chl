@@ -1,4 +1,3 @@
-```yaml
 name: eac-eddy-chl
 channels:
   - conda-forge
@@ -7,13 +6,11 @@ dependencies:
   - numpy
   - pandas
   - xarray
-  - dask
-  - netcdf4
-  - h5netcdf
   - scipy
   - matplotlib
-  - cartopy
-  - cmocean
-  - tqdm
-  - jupyter
+  - pyyaml
+  - gsw
+  - haversine
   - pip
+  - pip:
+      - mat73

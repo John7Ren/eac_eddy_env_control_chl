@@ -1,0 +1,41 @@
+# Copy this file to config/paths_local.yml, then edit the paths.
+# Run scripts using: --config config/paths_local.yml
+
+start_date: "2003-01-01"
+end_date: "2022-12-31"
+
+# Use keys in your mask dictionary. Common values from your workflow:
+#   ED, Open, Low-N, Low-S
+regions_to_run:
+  - ED
+  - Open
+  - Low-N
+
+# Set to true only if you want Step 01 to also load WOA23.
+# Otherwise run Step 02 separately.
+load_woa_in_step01: false
+
+paths:
+  # Root folder containing cycvar.pickle and acycvar.pickle
+  data_root: "/Users/pearl/Library/CloudStorage/OneDrive-UniversityofTasmania/Work/data"
+
+  # Output folder for intermediate bundles and climatology outputs
+  processed_dir: "/Users/pearl/Library/CloudStorage/OneDrive-UniversityofTasmania/Work/eac_eddy_env_control_chl_data/processed"
+
+  # MATLAB donut output generated from sat_chl_anom_v3_donut.m
+  donut_file: "/Users/pearl/Library/CloudStorage/OneDrive-UniversityofTasmania/Work/data/donut_chl8day2x4modis_rawNanom_dr0.2.mat"
+
+  # MATLAB MODIS CHL outputs generated from downloadMLD_calculate_chl_field.m
+  chl_dir: "/Users/pearl/Library/CloudStorage/OneDrive-UniversityofTasmania/Work/data/Chl_MODIS_8day_2x4"
+
+  # MATLAB MODIS K490 outputs
+  k490_dir: "/Users/pearl/Library/CloudStorage/OneDrive-UniversityofTasmania/Work/data/K490_MODIS_8day_2x4"
+
+  # Holte MLD file
+  mld_file: "/Users/pearl/Library/CloudStorage/OneDrive-UniversityofTasmania/Work/data/MLD_calculation/Argo_mixedlayers_monthlyclim_04142022.nc"
+
+  # WOA root folder containing WOA2023_salinity_20052014, WOA2023_temperature_20052014, WOA2023_nitrate_all
+  woa_root: "/Users/pearl/Library/CloudStorage/OneDrive-UniversityofTasmania/Work/data"
+
+  # Region mask dictionary
+  region_mask_file: "/Users/pearl/Library/CloudStorage/OneDrive-UniversityofTasmania/Work/data/mask15n15_region_dict_20260121.pkl"

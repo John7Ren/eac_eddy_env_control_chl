@@ -1,0 +1,23 @@
+[build-system]
+requires = ["setuptools>=64", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "eac-eddy-chl"
+version = "0.1.0"
+description = "Reusable code for the EAC eddy chlorophyll-a Paper 1 workflow"
+requires-python = ">=3.11"
+dependencies = [
+    "numpy",
+    "pandas",
+    "xarray",
+    "scipy",
+    "matplotlib",
+    "pyyaml",
+    "mat73",
+    "gsw",
+    "haversine",
+]
+
+[tool.setuptools.packages.find]
+where = ["src/python"]
