@@ -39,3 +39,8 @@ config/paths_local.yml
 *.egg-info/
 build/
 dist/
+
+# Python packaging metadata
+*.egg-info/
+build/
+dist/
